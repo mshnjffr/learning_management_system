@@ -1,6 +1,6 @@
 import {useAuthStore} from '../store/auth.js'
 import axios from './axios.js'
-import jwt_decode from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode'
 import Cookie from 'js-cookie' 
 import Swal from 'sweetalert2'
 
@@ -59,7 +59,7 @@ export const setUser = async () => {
     const refresh_token = Cookie.get('refresh_token');
 
     if(!access_token || !refresh_token){
-        alert("Tokens does not exist");
+        // alert("Tokens does not exist");
         return; 
     }
 
@@ -81,7 +81,7 @@ export const setAuthUser = (access_token, refresh_token) => {
         secure: true,
     })
 
-    const user = jwt_decode(access_token) ?? null
+    const user = jwtDecode(access_token) ?? null
     
     if (user) {
         useAuthStore.getState().setUser(user);
@@ -99,7 +99,7 @@ export const getRefreshedToken = async () => {
 
 export const isAccessTokenExpired = (access_token) => {
     try {
-        const decodedToken = jwt_decode(access_token);
+        const decodedToken = jwtDecode(access_token);
         return decodedToken.exp < Date.now() / 1000
     } catch (error){
         connsole.log(error); 
