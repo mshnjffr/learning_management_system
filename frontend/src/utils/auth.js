@@ -12,36 +12,44 @@ export const login = async (email, password) => {
         });
         if (status === 200){
             setAuthUser(data.access, data.refresh);
-            alert("Login successful")
         }
         return {data, error: null };
     } catch (error) {
         return {
             data: null, 
             error: error.response.data?.detail || "Something went wrong",
+            status: error.response.status,
         };
     }
 };
 
-export const register = async (full_name, email, password, password2) => {
+export const register = async (full_name,username, email, password, password2) => {
     try {
         const {data, status} = await axios.post(`user/register/`, {
             full_name,
+            username,
             email,
             password,
             password2
         });
 
-        await log(email, password); 
-        alert("Registeration successful.");
+        await login(email, password); 
         return {
             data,
             error: null
         }
     } catch (error) {
+        const errorResponse = error.response.data || {};
         return {
             data: null, 
-            error: error.response.data?.detail || "Something went wrong",
+            error: {
+                email: errorResponse.email || [],
+                full_name: errorResponse.full_name || [],
+                password: errorResponse.password || [],
+                password2: errorResponse.password2 || [],
+                username: errorResponse.username || []
+            },
+            status: error.response.status,
         };
     }
 };
@@ -50,8 +58,6 @@ export const logout = () => {
     Cookie.remove("access_token");
     Cookie.remove("refresh_token");
     useAuthStore.getState().setUser(null);
-
-    alert("Logout successful");
 };
 
 export const setUser = async () => {
@@ -64,8 +70,8 @@ export const setUser = async () => {
     }
 
     if(isAccessTokenExpired(access_token)){
-        const response = getRefreshedToken(refreshToken);
-        setAuthUser(response.access_token, response.refresh)
+        const response = getRefreshedToken(refresh_token);
+        setAuthUser(response.access, response.refresh)
     } else {
         setAuthUser(access_token, refresh_token)   
     }
@@ -91,7 +97,7 @@ export const setAuthUser = (access_token, refresh_token) => {
 
 export const getRefreshedToken = async () => {
     const refresh_token = Cookie.get('refresh_token');
-    const response = await axios.post(`token/refresh`, {
+    const response = await axios.post(`user/token/refresh/`, {
         refresh: refresh_token,
     });
     return response.data;
@@ -102,7 +108,7 @@ export const isAccessTokenExpired = (access_token) => {
         const decodedToken = jwtDecode(access_token);
         return decodedToken.exp < Date.now() / 1000
     } catch (error){
-        connsole.log(error); 
+        console.log(error); 
         return true;
     }
 };
